@@ -1,100 +1,30 @@
-Example Voting App
-=========
-
-A simple distributed application running across multiple Docker containers.
-
-Getting started
----------------
-
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/). 
-
-
-## Linux Containers
-
-The Linux stack uses Python, Node.js, .NET Core (or optionally Java), with Redis for messaging and Postgres for storage.
-
-> If you're using [Docker Desktop on Windows](https://store.docker.com/editions/community/docker-ce-desktop-windows), you can run the Linux version by [switching to Linux containers](https://docs.docker.com/docker-for-windows/#switch-between-windows-and-linux-containers), or run the Windows containers version.
-
-Run in this directory:
-```
-docker-compose up
-```
-The app will be running at [http://localhost:5000](http://localhost:5000), and the results will be at [http://localhost:5001](http://localhost:5001).
-
-Alternately, if you want to run it on a [Docker Swarm](https://docs.docker.com/engine/swarm/), first make sure you have a swarm. If you don't, run:
-```
-docker swarm init
-```
-Once you have your swarm, in this directory run:
-```
-docker stack deploy --compose-file docker-stack.yml vote
-```
-
-## Windows Containers
-
-An alternative version of the app uses Windows containers based on Nano Server. This stack runs on .NET Core, using [NATS](https://nats.io) for messaging and [TiDB](https://github.com/pingcap/tidb) for storage.
-
-You can build from source using:
-
-```
-docker-compose -f docker-compose-windows.yml build
-```
-
-Then run the app using:
-
-```
-docker-compose -f docker-compose-windows.yml up -d
-```
-
-> Or in a Windows swarm, run `docker stack deploy -c docker-stack-windows.yml vote`
-
-The app will be running at [http://localhost:5000](http://localhost:5000), and the results will be at [http://localhost:5001](http://localhost:5001).
-
-
-Run the app in Kubernetes
--------------------------
-
-The folder k8s-specifications contains the yaml specifications of the Voting App's services.
-
-First create the vote namespace
-
-```
-$ kubectl create namespace vote
-```
-
-Run the following command to create the deployments and services objects:
-```
-$ kubectl create -f k8s-specifications/
-deployment "db" created
-service "db" created
-deployment "redis" created
-service "redis" created
-deployment "result" created
-service "result" created
-deployment "vote" created
-service "vote" created
-deployment "worker" created
-```
-
-The vote interface is then available on port 31000 on each host of the cluster, the result one is available on port 31001.
-
-Architecture
------
-
-![Architecture diagram](architecture.png)
-
-* A front-end web app in [Python](/vote) or [ASP.NET Core](/vote/dotnet) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) or [NATS](https://hub.docker.com/_/nats/) queue which collects new votes
-* A [.NET Core](/worker/src/Worker), [Java](/worker/src/main) or [.NET Core 2.1](/worker/dotnet) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) or [TiDB](https://hub.docker.com/r/dockersamples/tidb/tags/) database backed by a Docker volume
-* A [Node.js](/result) or [ASP.NET Core SignalR](/result/dotnet) webapp which shows the results of the voting in real time
-
-
-Notes
------
-
-The voting application only accepts one vote per client. It does not register votes if a vote has already been submitted from a client.
-
-This isn't an example of a properly architected perfectly designed distributed app... it's just a simple 
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to 
-deal with them in Docker at a basic level. 
+1)Clone repo, move to required directory
+git clone https://github.com/dockersamples/example-voting-app.git
+cd example-voting-app
+2)Cut docker-compose file to 5 for each service
+nano docker-compose-db.yaml
+nano docker-compose-redis.yaml
+nano docker-compose-worker.yaml
+nano docker-compose-vote.yaml
+nano docker-compose-result.yaml
+3)Install docker-compose and run all preapared files
+sudo su
+curl -L "https://github.com/docker/compose/releases/download/1.28.5/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+docker-compose -f docker-compose-db.yaml -f docker-compose-redis.yaml -f docker-compose-worker.yaml -f docker-compose-vote.yaml -f docker-compose-result.yaml up -d
+4)Results in console:
+Creating example-voting-app_redis_1 ... done
+Creating example-voting-app_db_1    ... done
+Creating example-voting-app_vote_1  ... done
+Creating example-voting-app_result_1 ... done
+Creating example-voting-app_worker_1 ... done
+6)Apps can be reached here:
+http://35.192.122.213:5000/
+http://35.192.122.213:5001/
+5)Push files to github
+exit
+git add *
+git commit -m "new docker-compose files"
+git remote set-url origin git@github.com:elenarazguliaeva/docker.git
+git push
